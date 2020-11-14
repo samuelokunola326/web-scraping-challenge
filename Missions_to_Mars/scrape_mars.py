@@ -30,7 +30,7 @@ def web_scrape():
     soup = bs(html, 'lxml')
 
     # getting the title and summary paragraph
-    title = soup.find_all("div", class_="content_title")[1].text
+    tl = soup.find_all("div", class_="content_title")[1].text
     p = soup.find_all("div", class_="article_teaser_body")[0].text
 
 
@@ -43,7 +43,7 @@ def web_scrape():
 
     #getting img link 
     image = soup.find_all("div", class_="img")[0].img["src"]
-    image_url = f'https://www.jpl.nasa.gov{image}'
+    f_image_url = f'https://www.jpl.nasa.gov{image}'
 
     # visiting site to scrape planet facts
     url = "https://space-facts.com/mars/"
@@ -79,7 +79,7 @@ def web_scrape():
     
         #adding to dict and making a list of dicts
         h_dict["title"] = title
-        h_dict["img_url"] = browser.find_by_text("Sample")["href"]
+        h_dict["h_imgs"] = browser.find_by_text("Sample")["href"]
         h_imgs.append(h_dict)
     
         # return to web page
@@ -88,11 +88,11 @@ def web_scrape():
     h_imgs
 
     # store to mars_dict
-    mars_data["title"] = title
-    mars_data["Summary"] = p
-    mars_data["featured_image"] = image_url
-    mars_data["mars_fact_table_html"] = mars_info
-    mars_data["hemisphere_image_urls"] = h_imgs
+    mars_data["tl"] = tl
+    mars_data["p"] = p
+    mars_data["f_image_url"] = f_image_url
+    mars_data["mars_info"] = mars_info
+    mars_data["h_imgs"] = h_imgs
 
     browser.quit()
     
