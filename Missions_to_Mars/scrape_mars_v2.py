@@ -6,7 +6,8 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium import webdriver
 import pymongo
 import requests
-
+import time
+import shutil
 
 
 
@@ -26,6 +27,9 @@ def web_scrape():
     # visiting site to scrape new title and paragraph
     url = 'https://mars.nasa.gov/news/'
     browser.visit(url)
+
+    time.sleep(1)
+
     html = browser.html
     soup = bs(html, 'lxml')
 
@@ -35,7 +39,7 @@ def web_scrape():
 
 
     # getting the title and summary paragraph
-    tl = slide_elem.find("div", class_="content_title").get_text()
+    title = slide_elem.find("div", class_="content_title").get_text()
     p = slide_elem.find("div", class_="article_teaser_body").get_text()
 
     
@@ -48,7 +52,15 @@ def web_scrape():
 
     #getting img link 
     image = soup.find_all("div", class_="img")[0].img["src"]
-    f_image_url = f'https://www.jpl.nasa.gov{image}'
+    featured_image_url = f'https://www.jpl.nasa.gov{image}'
+
+
+    #saving img as img file 
+    response = requests.get(featured_image_url, stream=True)
+    with open('feature_image_url.png', 'wb') as out_file:
+        shutil.copyfileobj(response.raw, out_file)
+
+    featured_image_url = 'feature_image_url.png'
 
     # visiting site to scrape planet facts
     url = "https://space-facts.com/mars/"
@@ -70,21 +82,29 @@ def web_scrape():
 
 
     # loop through the links and add the urls
-    h_imgs = []
+    hemisphere_image_urls = []
 
     #getting titles 
     ht = soup.find_all("h3")
 
     for t in ht:
         #creating dict to hold titles and urls 
-        h_dict = {}
-        title = t.text.strip()
-        browser.click_link_by_partial_text(title)
+        img_dict = {}
+        htitle = t.text.strip()
+        browser.click_link_by_partial_text(htitle)
     
         #adding to dict and making a list of dicts
-        h_dict["title"] = title
-        h_dict["h_imgs"] = browser.find_by_text("Sample")["href"]
-        h_imgs.append(h_dict)
+        img_dict["htitle"] = htitle
+
+        h_img = browser.find_by_text("Sample")["href"]
+        response = requests.get(h_img, stream=True)
+        with open(f'{htitle}.png', 'wb') as out_file:
+            shutil.copyfileobj(response.raw, out_file)
+
+        h_img = f'{htitle}.png'
+
+        img_dict["imgs_url"] = h_img
+        hemisphere_image_urls.append(img_dict)
     
         # return to web page
         browser.visit(url)
@@ -92,11 +112,11 @@ def web_scrape():
         # h_imgs
 
     # store to mars_dict
-    mars_data["tl"] = tl
+    mars_data["title"] = title
     mars_data["p"] = p
-    mars_data["f_image_url"] = f_image_url
+    mars_data["featured_image_url"] = featured_image_url
     mars_data["mars_info"] = mars_info
-    mars_data["h_imgs"] = h_imgs
+    mars_data["hemisphere_image_urls"] = hemisphere_image_urls
 
     browser.quit()
     
