@@ -7,7 +7,7 @@ from selenium import webdriver
 import pymongo
 import requests
 import time
-import shutil
+# import shutil
 
 
 
@@ -28,13 +28,15 @@ def web_scrape():
     url = 'https://mars.nasa.gov/news/'
     browser.visit(url)
 
+    #using 1 sec sleep to give browser time to download html
     time.sleep(1)
 
+    #creating soup object 
     html = browser.html
     soup = bs(html, 'lxml')
 
     
-
+    # selecting the slide element to pull title and paragraph
     slide_elem = soup.select_one("ul.item_list li.slide")
 
 
@@ -53,14 +55,6 @@ def web_scrape():
     #getting img link 
     image = soup.find_all("div", class_="img")[0].img["src"]
     featured_image_url = f'https://www.jpl.nasa.gov{image}'
-
-
-    #saving img as img file 
-    response = requests.get(featured_image_url, stream=True)
-    with open('feature_image_url.png', 'wb') as out_file:
-        shutil.copyfileobj(response.raw, out_file)
-
-    featured_image_url = 'feature_image_url.png'
 
     # visiting site to scrape planet facts
     url = "https://space-facts.com/mars/"
@@ -81,7 +75,7 @@ def web_scrape():
     soup = bs(html, "lxml")
 
 
-    # loop through the links and add the urls
+    # loop through the links and adding the urls
     hemisphere_image_urls = []
 
     #getting titles 
@@ -93,17 +87,9 @@ def web_scrape():
         htitle = t.text.strip()
         browser.click_link_by_partial_text(htitle)
     
-        #adding to dict and making a list of dicts
+        #adding to dict and making a list of dictswith img and title
         img_dict["htitle"] = htitle
-
-        h_img = browser.find_by_text("Sample")["href"]
-        response = requests.get(h_img, stream=True)
-        with open(f'{htitle}.png', 'wb') as out_file:
-            shutil.copyfileobj(response.raw, out_file)
-
-        h_img = f'{htitle}.png'
-
-        img_dict["imgs_url"] = h_img
+        img_dict["imgs_url"] = browser.find_by_text("Sample")["href"]
         hemisphere_image_urls.append(img_dict)
     
         # return to web page
@@ -111,13 +97,14 @@ def web_scrape():
     
         # h_imgs
 
-    # store to mars_dict
+    # store to mars_dict to enter into mongodb
     mars_data["title"] = title
     mars_data["p"] = p
     mars_data["featured_image_url"] = featured_image_url
     mars_data["mars_info"] = mars_info
     mars_data["hemisphere_image_urls"] = hemisphere_image_urls
 
+    #closing browser
     browser.quit()
     
     return mars_data
